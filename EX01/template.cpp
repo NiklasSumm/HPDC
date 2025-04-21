@@ -22,29 +22,42 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Failed to allocate buffer\n");
     MPI_Finalize();
     return EXIT_FAILURE;
-}
+  }
+
+  bool blocking = true;
+  MPI_Request request;
 
   for (int size = 1024; size <= 1024*1024; size *= 2){
     double start_time = MPI_Wtime();
 
-    for (int i = 0; i < 10; i++){
-      if (rank == 0) {
-        MPI_Send(data, size, MPI_CHAR, 1, 0, MPI_COMM_WORLD);
-        MPI_Recv(data, size, MPI_CHAR, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      } else if (rank == 1) {
-        MPI_Recv(data, size, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Send(data, size, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+    if (blocking){
+      for (int i = 0; i < 10; i++){
+        if (rank == 0) {
+          MPI_Send(data, size, MPI_CHAR, 1, 0, MPI_COMM_WORLD);
+        } else if (rank == 1) {
+          MPI_Recv(data, size, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+      }
+    }
+    else{
+      for (int i = 0; i < 10; i++){
+        if (rank == 0) {
+          MPI_Isend(data, size, MPI_CHAR, 1, 0, MPI_COMM_WORLD, &request);
+          MPI_Wait(&request, MPI_STATUS_IGNORE);
+        } else if (rank == 1) {
+          MPI_Irecv(data, size, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &request);
+          MPI_Wait(&request, MPI_STATUS_IGNORE);
+        } 
       }
     }
 
     double end_time = MPI_Wtime();
 
     if (rank == 0) {
-      double total_time = end_time - start_time;
-      double avg_round_trip = (total_time / 10) * 1000; // in ms
-      double half_trip = avg_round_trip / 2;
-      printf("Message size: %6d bytes | Full RTT: %.6f ms | Half RTT (Latency): %.6f ms\n",
-             size, avg_round_trip, half_trip);
+      double time = end_time - start_time;
+      double total_bytes = (double)size * 10;
+      double bandwidth = (total_bytes / time) / (1024 * 1024);
+      printf("Non-Blocking | Message size: %6d bytes | Bandwidth: %.2f MB/s\n", size, bandwidth);
     }
   }
 
