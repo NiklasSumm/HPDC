@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
   double start_time = MPI_Wtime();
   for (int iteration = 0; iteration < 10; iteration++){
-    MPI_BARRIER(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   }
   double end_time = MPI_Wtime();
 
