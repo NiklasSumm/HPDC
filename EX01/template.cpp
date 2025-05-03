@@ -36,23 +36,20 @@ int main(int argc, char *argv[]) {
 
     double start_time = MPI_Wtime();
 
-    for (int iteration = 0; iteration < 10; iteration++){
-      for (int i = 0; i < 2048; i++){
-        for (int j = 0; j < 2048; j++){
-          double sum = 0;
-          for (int k = 0; k < 2048; k++){
-            sum += matrixA[k][j] * matrixB[i][k];
-          }
-          matrixC[i][j] = sum;
+    for (int i = 0; i < 2048; i++){
+      for (int j = 0; j < 2048; j++){
+        double sum = 0;
+        for (int k = 0; k < 2048; k++){
+          sum += matrixA[k][j] * matrixB[i][k];
         }
+        matrixC[i][j] += sum;
       }
-      printf("iteration done - %f\n", matrixC[iteration][iteration]);
     }
 
     double end_time = MPI_Wtime();
     double total_time = end_time - start_time;
 
-    printf("Matrix multiply needed %f ms", 1000*(total_time)/10);
+    printf("Matrix multiply needed %f ms", 1000*(total_time));
   }
 
   // Finalize MPI
