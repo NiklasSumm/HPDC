@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
     double total_time = 0;
 
-    for (int iterations = 0; iterations < 10; iterations++){
+    for (int iteration = 0; iteration < 10; iteration++){
       double start_time = MPI_Wtime();
       for (int i = 0; i < 2048; i++){
         for (int j = 0; j < 2048; j++){
