@@ -1,11 +1,14 @@
 /* HPDC SS 2025, C++ Template 
  */
 #include <mpi.h>
+#include <random>
 
 #include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <string>
+
+double* matrix_multiply()
 
 int main(int argc, char *argv[]) {
 
@@ -17,48 +20,37 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  char *data = (char *)malloc(1024*1024);
-  if (!data) {
-    fprintf(stderr, "Failed to allocate buffer\n");
-    MPI_Finalize();
-    return EXIT_FAILURE;
-  }
+  if (rank == 1){
+    double matrixA[2048][2048];
+    double matrixB[2048][2048];
+    double matrixC[2048][2048];
 
-  bool blocking = true;
-  MPI_Request request;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(-10, 10);
 
-  for (int size = 1024; size <= 1024*1024; size *= 2){
-    double start_time = MPI_Wtime();
-
-    if (blocking){
-      for (int i = 0; i < 10; i++){
-        if (rank == 0) {
-          MPI_Send(data, size, MPI_CHAR, 1, 0, MPI_COMM_WORLD);
-        } else if (rank == 1) {
-          MPI_Recv(data, size, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
+    for (int i = 0; i < 2048; i++){
+      for (int j = 0; j < 2048; j++){
+        matrixA[i][j] = dis(gen);
+        matrixB[i][j] = dis(gen);
       }
     }
-    else{
-      for (int i = 0; i < 10; i++){
-        if (rank == 0) {
-          MPI_Isend(data, size, MPI_CHAR, 1, 0, MPI_COMM_WORLD, &request);
-          MPI_Wait(&request, MPI_STATUS_IGNORE);
-        } else if (rank == 1) {
-          MPI_Irecv(data, size, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &request);
-          MPI_Wait(&request, MPI_STATUS_IGNORE);
-        } 
+
+    double start_time = MPI_Wtime();
+
+    for (int i = 0; i < 2048; i++){
+      for (int j = 0; j < 2048; j++){
+        double sum = 0;
+        for (int k = 0; k < 2048; k++){
+          sum += matrixA[k][j] * matrixB[i][k];
+        }
+        matrixC[i][j] = sum;
       }
     }
 
     double end_time = MPI_Wtime();
 
-    if (rank == 0) {
-      double time = end_time - start_time;
-      double total_bytes = (double)size * 10;
-      double bandwidth = (total_bytes / time) / (1024 * 1024);
-      printf("Non-Blocking | Message size: %6d bytes | Bandwidth: %.2f MB/s\n", size, bandwidth);
-    }
+    printf("Matrix multiply needed %d ms", 1000*(end_time - start_time));
   }
 
   // Finalize MPI
