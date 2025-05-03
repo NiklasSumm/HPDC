@@ -34,10 +34,9 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    double total_time = 0;
+    double start_time = MPI_Wtime();
 
     for (int iteration = 0; iteration < 10; iteration++){
-      double start_time = MPI_Wtime();
       for (int i = 0; i < 2048; i++){
         for (int j = 0; j < 2048; j++){
           double sum = 0;
@@ -47,10 +46,11 @@ int main(int argc, char *argv[]) {
           matrixC[i][j] = sum;
         }
       }
-      double end_time = MPI_Wtime();
-      total_time += end_time- start_time;
       printf("iteration done - %f\n", matrixC[iteration][iteration]);
     }
+
+    double end_time = MPI_Wtime();
+    double total_time = end_time - start_time;
 
     printf("Matrix multiply needed %f ms", 1000*(total_time)/10);
   }
