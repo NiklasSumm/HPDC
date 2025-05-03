@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     double end_time = MPI_Wtime();
 
-    printf("Matrix multiply needed %d ms", 1000*(end_time - start_time));
+    printf("Matrix multiply needed %f ms", 1000*(end_time - start_time));
   }
 
   // Finalize MPI
