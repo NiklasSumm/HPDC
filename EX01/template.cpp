@@ -8,8 +8,6 @@
 #include <iostream>
 #include <string>
 
-double* matrix_multiply()
-
 int main(int argc, char *argv[]) {
 
   // Initialize MPI
