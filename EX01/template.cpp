@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int N = 512;
+    int N = 5;
 
     // Argumente parsen
     for (int i = 1; i < argc; ++i) {
@@ -34,9 +34,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (N % size != 0) {
+    if (N == 0) {
         if (rank == 0)
-            cerr << "Matrixgröße N muss durch Anzahl der Prozesse teilbar sein!" << endl;
+            cerr << "Usage: " << argv[0] << " matrix_size=<N>" << endl;
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -48,14 +48,8 @@ int main(int argc, char** argv) {
     }
 
     int* flatB = new int[N * N];
-    int* localA = new int[(N / size) * N];
-    int* localC = new int[(N / size) * N];
 
-    // Startzeit
-    MPI_Barrier(MPI_COMM_WORLD);
-    double startTime = MPI_Wtime();
-
-    // B an alle senden
+    // Broadcast Matrix B an alle
     if (rank == 0) {
         for (int i = 0; i < N; ++i)
             for (int j = 0; j < N; ++j)
@@ -63,37 +57,60 @@ int main(int argc, char** argv) {
     }
     MPI_Bcast(flatB, N * N, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // A verteilen
+    // Scatterv Vorbereitung
+    vector<int> sendcounts(size);
+    vector<int> displs(size);
+    int rowsPerProc = N / size;
+    int remainder = N % size;
+
+    int offset = 0;
+    for (int i = 0; i < size; ++i) {
+        sendcounts[i] = (rowsPerProc + (i < remainder ? 1 : 0)) * N;
+        displs[i] = offset;
+        offset += sendcounts[i];
+    }
+
+    int localRows = sendcounts[rank] / N;
+
+    // Speicher für lokalen Teil
+    int* localA = new int[sendcounts[rank]];
+    int* localC = new int[sendcounts[rank]];
+
+    // Flat-A nur auf Rank 0
     int* flatA = nullptr;
+    int* flatC = nullptr;
     if (rank == 0) {
         flatA = new int[N * N];
+        flatC = new int[N * N];
         for (int i = 0; i < N; ++i)
             for (int j = 0; j < N; ++j)
                 flatA[i * N + j] = A[i][j];
     }
-    MPI_Scatter(flatA, (N / size) * N, MPI_INT, localA, (N / size) * N, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double startTime = MPI_Wtime();
+
+    // A verteilen
+    MPI_Scatterv(flatA, sendcounts.data(), displs.data(), MPI_INT,
+                 localA, sendcounts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
     // Teilweise Matrixmultiplikation
-    for (int i = 0; i < N / size; i++) {
-        for (int j = 0; j < N; j++) {
+    for (int i = 0; i < localRows; ++i) {
+        for (int j = 0; j < N; ++j) {
             localC[i * N + j] = 0;
-            for (int k = 0; k < N; k++) {
+            for (int k = 0; k < N; ++k) {
                 localC[i * N + j] += localA[i * N + k] * flatB[k * N + j];
             }
         }
     }
 
     // Ergebnisse sammeln
-    int* flatC = nullptr;
-    if (rank == 0)
-        flatC = new int[N * N];
-    MPI_Gather(localC, (N / size) * N, MPI_INT, flatC, (N / size) * N, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(localC, sendcounts[rank], MPI_INT,
+                flatC, sendcounts.data(), displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
-    // Endzeit
     MPI_Barrier(MPI_COMM_WORLD);
     double endTime = MPI_Wtime();
 
-    // Ausgabe
     if (rank == 0) {
         cout << "Matrix C = A * B (Größe: " << N << "x" << N << ")" << endl;
         for (int i = 0; i < N; ++i) {
@@ -101,11 +118,10 @@ int main(int argc, char** argv) {
                 cout << flatC[i * N + j] << "\t";
             cout << endl;
         }
-        cout << "Gesamtdauer inkl. Scatter/Gather/Broadcast/Multiplikation: "
+        cout << "Gesamtdauer inkl. Scatterv/Gatherv/Broadcast/Multiplikation: "
              << (endTime - startTime) << " Sekunden." << endl;
     }
 
-    // Speicher freigeben
     delete[] flatB;
     delete[] localA;
     delete[] localC;
