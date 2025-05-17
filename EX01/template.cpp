@@ -25,19 +25,13 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int N = 0;
+    int N = 512;
 
     // Argumente parsen
     for (int i = 1; i < argc; ++i) {
         if (strncmp(argv[i], "matrix_size=", 12) == 0) {
             N = atoi(argv[i] + 12);
         }
-    }
-
-    if (N == 0) {
-        if (rank == 0)
-            cerr << "Usage: " << argv[0] << " matrix_size=<N>" << endl;
-        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (N % size != 0) {
