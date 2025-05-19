@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
     double endTime = MPI_Wtime();
 
-    if (rank == 0) {
+    if (rank == 0 && N < 10) {
         cout << "Matrix C = A * B (Größe: " << N << "x" << N << ")" << endl;
         for (int i = 0; i < N; ++i) {
             for (int j = 0; j < N; ++j)
