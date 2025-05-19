@@ -27,8 +27,9 @@ echo "nodes:" $SLURM_JOB_NODELIST
 # mpirun template sample_cli_parameter
 for TASKS in $(seq 2 2 24)
 do
+    #SBATCH --ntasks $TASKS
     echo "Starte Run mit $TASKS Tasks"
-    mpirun --ntasks=$TASKS template matrix_size=2048 sample_cli_parameter
+    mpirun template matrix_size=2048 sample_cli_parameter
     echo "-----------------------------"
 done
 
