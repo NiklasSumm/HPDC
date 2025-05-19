@@ -24,8 +24,13 @@ echo "ntasks:" $SLURM_NTASKS
 echo "nodes:" $SLURM_JOB_NODELIST
 
 # options for the number of nodes and tasks are set automatically by slurm, for more information on changing options yourself, see: https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#launch-options
-mpirun template sample_cli_parameter
-
+# mpirun template sample_cli_parameter
+for TASKS in $(seq 2 2 24)
+do
+    echo "Starte Run mit $TASKS Tasks"
+    mpirun --ntasks=$TASKS template matrix_size=2048 sample_cli_parameter
+    echo "-----------------------------"
+done
 
 # To get information about the mapping of tasks to cores and nodes, you can use the following command:
 # mpirun --display-map template sample_cli_parameter
