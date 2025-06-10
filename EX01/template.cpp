@@ -1,135 +1,89 @@
 #include <mpi.h>
-#include <iostream>
-#include <vector>
-#include <cstdlib>
-#include <cstring>
+#include <stdio.h>
+#include <stdlib.h>
 
-using namespace std;
+#define N 8   // Matrixgröße N x N
+#define iterations 100
+#define MASTER 0
 
-void initializeMatrices(vector<vector<int>>& A, vector<vector<int>>& B, int N) {
-    for (int i = 0; i < N; i++) {
-        vector<int> rowA(N), rowB(N);
-        for (int j = 0; j < N; j++) {
-            rowA[j] = i + j;
-            rowB[j] = i * j;
+void print_matrix(double* matrix, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            printf("%5.1f ", matrix[i*n + j]);
         }
-        A[i] = rowA;
-        B[i] = rowB;
+        printf("\n");
     }
+    printf("\n");
 }
 
-int main(int argc, char** argv) {
-    MPI_Init(&argc, &argv);
+int main(int argc, char* argv[]) {
+    int rank, size = 1;
 
-    int rank, size;
+    MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int N = 2048;
-
-    // Argumente parsen
-    for (int i = 1; i < argc; ++i) {
-        if (strncmp(argv[i], "matrix_size=", 12) == 0) {
-            N = atoi(argv[i] + 12);
+    if (rank == MASTER) {
+        if (argc > 1) {
+            //iterations = atoi(argv[1]);
+            //if (iterations <= 0) iterations = 1;
         }
-    }
 
-    if (N == 0) {
-        if (rank == 0)
-            cerr << "Usage: " << argv[0] << " matrix_size=<N>" << endl;
-        MPI_Abort(MPI_COMM_WORLD, 1);
-    }
+        printf("Stencil-Berechnung mit %d Iteration(en)\n\n", iterations);
 
-    vector<vector<int>> A, B;
-    if (rank == 0) {
-        A.resize(N, vector<int>(N));
-        B.resize(N, vector<int>(N));
-        initializeMatrices(A, B, N);
-    }
+        double* matrix = (double*)malloc(N * N * sizeof(double));
+        double* result_matrix = (double*)malloc(N * N * sizeof(double));
 
-    int* flatB = new int[N * N];
-
-    // Broadcast Matrix B an alle
-    if (rank == 0) {
-        for (int i = 0; i < N; ++i)
-            for (int j = 0; j < N; ++j)
-                flatB[i * N + j] = B[i][j];
-    }
-    MPI_Bcast(flatB, N * N, MPI_INT, 0, MPI_COMM_WORLD);
-
-    // Scatterv Vorbereitung
-    vector<int> sendcounts(size);
-    vector<int> displs(size);
-    int rowsPerProc = N / size;
-    int remainder = N % size;
-
-    int offset = 0;
-    for (int i = 0; i < size; ++i) {
-        sendcounts[i] = (rowsPerProc + (i < remainder ? 1 : 0)) * N;
-        displs[i] = offset;
-        offset += sendcounts[i];
-    }
-
-    int localRows = sendcounts[rank] / N;
-
-    // Speicher für lokalen Teil
-    int* localA = new int[sendcounts[rank]];
-    int* localC = new int[sendcounts[rank]];
-
-    // Flat-A nur auf Rank 0
-    int* flatA = nullptr;
-    int* flatC = nullptr;
-    if (rank == 0) {
-        flatA = new int[N * N];
-        flatC = new int[N * N];
-        for (int i = 0; i < N; ++i)
-            for (int j = 0; j < N; ++j)
-                flatA[i * N + j] = A[i][j];
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    double startTime = MPI_Wtime();
-
-    // A verteilen
-    MPI_Scatterv(flatA, sendcounts.data(), displs.data(), MPI_INT,
-                 localA, sendcounts[rank], MPI_INT, 0, MPI_COMM_WORLD);
-
-    // Teilweise Matrixmultiplikation
-    for (int i = 0; i < localRows; ++i) {
-        for (int j = 0; j < N; ++j) {
-            localC[i * N + j] = 0;
-            for (int k = 0; k < N; ++k) {
-                localC[i * N + j] += localA[i * N + k] * flatB[k * N + j];
+        // Initialisierung: oberste Zeile erstes Viertel 127, Rest 0
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                if (i == 0 && j < N/4)
+                    matrix[i*N + j] = 127.0;
+                else
+                    matrix[i*N + j] = 0.0;
             }
         }
-    }
 
-    // Ergebnisse sammeln
-    MPI_Gatherv(localC, sendcounts[rank], MPI_INT,
-                flatC, sendcounts.data(), displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
+        printf("Initiale Matrix:\n");
+        print_matrix(matrix, N);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    double endTime = MPI_Wtime();
+        // Zeitmessung starten
+        double start_time = MPI_Wtime();
 
-    if (rank == 0) {
-        if (N < 10){
-            cout << "Matrix C = A * B (Größe: " << N << "x" << N << ")" << endl;
-            for (int i = 0; i < N; ++i) {
-                for (int j = 0; j < N; ++j)
-                    cout << flatC[i * N + j] << "\t";
-                cout << endl;
+        // Iterationen
+        for (int it = 0; it < iterations; it++) {
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j < N; j++) {
+                    double center = matrix[i*N + j];
+                    double top    = (i == 0)   ? 0.0 : matrix[(i-1)*N + j];
+                    double bottom = (i == N-1) ? 0.0 : matrix[(i+1)*N + j];
+                    double left   = (j == 0)   ? 0.0 : matrix[i*N + (j-1)];
+                    double right  = (j == N-1) ? 0.0 : matrix[i*N + (j+1)];
+
+                    result_matrix[i*N + j] = center + 0.24 * (-4 * center + top + bottom + left + right);
+                }
             }
-        }
-        cout << "Gesamtdauer inkl. Scatterv/Gatherv/Broadcast/Multiplikation: "
-             << (endTime - startTime) << " Sekunden." << endl;
-    }
 
-    delete[] flatB;
-    delete[] localA;
-    delete[] localC;
-    if (rank == 0) {
-        delete[] flatA;
-        delete[] flatC;
+            // Ergebnis der Iteration übernehmen
+            double* tmp = matrix;
+            matrix = result_matrix;
+            result_matrix = tmp;
+        }
+
+        // Zeitmessung stoppen
+        double end_time = MPI_Wtime();
+
+        // Ergebnis ausgeben
+        printf("Ergebnis nach %d Iterationen:\n", iterations);
+        if (iterations % 2 == 0)
+            print_matrix(matrix, N);
+        else
+            print_matrix(result_matrix, N);
+
+        printf("Berechnungszeit: %f Sekunden\n", end_time - start_time);
+
+        free(matrix);
+        free(result_matrix);
     }
 
     MPI_Finalize();
