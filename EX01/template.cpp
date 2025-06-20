@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         // Dann empfangen
         MPI_Recv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        int recv_chunk_index = (rank + iter - 1) % s;
+        int recv_chunk_index = (rank + iter - 1 + s) % s;
         if (iter == size - 1){ //last iteration: overriding old value
             for (int i = 0; i < chunk_size; i++) {
                 array[recv_chunk_index * chunk_size + i] = recv_chunk[i];
