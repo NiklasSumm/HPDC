@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     // Array anlegen und füllen
     float* array = (float*)malloc(array_size * sizeof(float));
     for (int i = 0; i < array_size; i++) {
-        array[i] = (float)i + rank * 100.0f; // Damit sich die Werte je Prozess unterscheiden
+        array[i] = (float)i;
     }
 
     // Speicher für Empfangschunk
