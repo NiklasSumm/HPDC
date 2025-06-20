@@ -44,10 +44,7 @@ int main(int argc, char** argv) {
         // Dann empfangen
         MPI_Recv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        // Bestimme Chunk-Index, wo der Senderprozess seinen Chunk hatte
-        int recv_chunk_index = (source + iter) % s;
-
-        // Empfangenen Chunk an der richtigen Stelle aufaddieren
+        int recv_chunk_index = (rank - 1 + iter + s) % s;
         for (int i = 0; i < chunk_size; i++) {
             array[recv_chunk_index * chunk_size + i] += recv_chunk[i];
         }
