@@ -33,9 +33,9 @@ int main(int argc, char** argv) {
     int source = (rank - 1 + size) % size;
 
     // Iteration über size Runden
-    for (int iter = 0; iter <= size; iter++) {
+    for (int iter = 0; iter < size; iter++) {
         // Bestimme Chunk-Index für diese Iteration beim eigenen Prozess
-        int send_chunk_index = (rank + iter) % s;
+        int send_chunk_index = (rank - iter + s) % s;
         float* send_ptr = array + send_chunk_index * chunk_size;
 
         // Zuerst senden
