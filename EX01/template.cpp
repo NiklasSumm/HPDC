@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
         // Empfangenen Chunk an die richtige Stelle im lokalen Array aufaddieren
         for (int i = 0; i < chunk_size; i++) {
-            array[((chunk_index + 1 % s)) * chunk_size + i] += recv_chunk[i];
+            array[((chunk_index - 1 + s) % s) * chunk_size + i] += recv_chunk[i];
         }
     }
 
