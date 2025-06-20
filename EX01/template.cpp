@@ -4,8 +4,8 @@
 
 int main(int argc, char** argv) {
     int rank, size;
-    int array_size = 12; // Muss durch s teilbar sein
-    int s = 4;           // Anzahl der Teile (Chunks)
+    int array_size = 24; // Muss durch s teilbar sein
+    int s = 12;           // Anzahl der Teile (Chunks)
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     int source = (rank - 1 + size) % size;
 
     // Iteration über size Runden
-    for (int iter = 0; iter < size; iter++) {
+    for (int iter = 0; iter < s; iter++) {
         // Bestimme Chunk-Index für diese Iteration beim eigenen Prozess
         int send_chunk_index = (rank + iter) % s;
         float* send_ptr = array + send_chunk_index * chunk_size;
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
         MPI_Recv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         int recv_chunk_index = (rank + iter - 1 + s) % s;
-        if (iter == size - 1){ //last iteration: overriding old value
+        if (iter == s - 1){ //last iteration: overriding old value
             for (int i = 0; i < chunk_size; i++) {
                 array[recv_chunk_index * chunk_size + i] = recv_chunk[i];
             }
