@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
     int chunk_size = array_size / s;
 
-    // Array anlegen und füllen
+    // Array anlegen und mit array[i] = i initialisieren
     float* array = (float*)malloc(array_size * sizeof(float));
     for (int i = 0; i < array_size; i++) {
         array[i] = (float)i;
@@ -34,11 +34,9 @@ int main(int argc, char** argv) {
 
     // Iteration über size Runden
     for (int iter = 0; iter < size; iter++) {
-        // Bestimme Chunk-Index für diese Iteration
-        int chunk_index = (rank + iter) % s;
-
-        // Pointer auf den zu sendenden Chunk direkt aus dem Array
-        float* send_ptr = array + chunk_index * chunk_size;
+        // Bestimme Chunk-Index für diese Iteration beim eigenen Prozess
+        int send_chunk_index = (rank + iter) % s;
+        float* send_ptr = array + send_chunk_index * chunk_size;
 
         // Zuerst senden
         MPI_Send(send_ptr, chunk_size, MPI_FLOAT, dest, 0, MPI_COMM_WORLD);
@@ -46,9 +44,12 @@ int main(int argc, char** argv) {
         // Dann empfangen
         MPI_Recv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        // Empfangenen Chunk an die richtige Stelle im lokalen Array aufaddieren
+        // Bestimme Chunk-Index, wo der Senderprozess seinen Chunk hatte
+        int recv_chunk_index = (source + iter) % s;
+
+        // Empfangenen Chunk an der richtigen Stelle aufaddieren
         for (int i = 0; i < chunk_size; i++) {
-            array[((chunk_index - 1 + s) % s) * chunk_size + i] += recv_chunk[i];
+            array[recv_chunk_index * chunk_size + i] += recv_chunk[i];
         }
     }
 
