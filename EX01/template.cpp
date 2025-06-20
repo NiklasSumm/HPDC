@@ -5,7 +5,7 @@
 int main(int argc, char** argv) {
     int rank, size;
     int array_size = 12; // Muss durch s teilbar sein
-    int s = 3;           // Anzahl der Teile (Chunks)
+    int s = 2;           // Anzahl der Teile (Chunks)
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
