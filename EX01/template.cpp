@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
         if (rank == 0) {
             printf("Fehler: array_size muss durch s teilbar sein und Anzahl Prozesse == s!\n");
         }
-        MPI_Abort(MPI_COMM_WORLD, 1);
+        //MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     int runs = 5;
