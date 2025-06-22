@@ -8,13 +8,18 @@ void ring_allreduce(float* array, int array_size, int s, int rank, int size) {
     int dest = (rank + 1) % size;
     int source = (rank - 1 + size) % size;
 
+    MPI_Request send_req, recv_req;
+
     // Reduce-Scatter Phase
     for (int iter = 0; iter < s; iter++) {
         int send_chunk_index = (rank - iter + s) % s;
         float* send_ptr = array + send_chunk_index * chunk_size;
 
-        MPI_Send(send_ptr, chunk_size, MPI_FLOAT, dest, 0, MPI_COMM_WORLD);
-        MPI_Recv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Irecv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, &recv_req);
+        MPI_Isend(send_ptr, chunk_size, MPI_FLOAT, dest, 0, MPI_COMM_WORLD, &send_req);
+
+        MPI_Wait(&recv_req, MPI_STATUS_IGNORE);
+        MPI_Wait(&send_req, MPI_STATUS_IGNORE);
 
         int recv_chunk_index = (rank - (iter + 1) + s) % s;
         for (int i = 0; i < chunk_size; i++) {
@@ -27,8 +32,11 @@ void ring_allreduce(float* array, int array_size, int s, int rank, int size) {
         int send_chunk_index = (rank - iter + 1 + s) % s;
         float* send_ptr = array + send_chunk_index * chunk_size;
 
-        MPI_Send(send_ptr, chunk_size, MPI_FLOAT, dest, 0, MPI_COMM_WORLD);
-        MPI_Recv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Irecv(recv_chunk, chunk_size, MPI_FLOAT, source, 0, MPI_COMM_WORLD, &recv_req);
+        MPI_Isend(send_ptr, chunk_size, MPI_FLOAT, dest, 0, MPI_COMM_WORLD, &send_req);
+
+        MPI_Wait(&recv_req, MPI_STATUS_IGNORE);
+        MPI_Wait(&send_req, MPI_STATUS_IGNORE);
 
         int recv_chunk_index = (rank - iter + s) % s;
         for (int i = 0; i < chunk_size; i++) {
