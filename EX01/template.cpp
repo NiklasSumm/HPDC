@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
         if (rank == 0) {
             printf("Usage: %s <array_size> <s>\n", argv[0]);
         }
-        MPI_Abort(MPI_COMM_WORLD, 1);
+        //MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     array_size = atoi(argv[1]);
