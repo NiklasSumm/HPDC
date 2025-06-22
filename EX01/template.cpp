@@ -64,22 +64,8 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (argc != 3) {
-        if (rank == 0) {
-            printf("Usage: %s <array_size> <s>\n", argv[0]);
-        }
-        //MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-
     array_size = atoi(argv[1]);
     s = atoi(argv[2]);
-
-    if (array_size % s != 0 || size != s) {
-        if (rank == 0) {
-            printf("Fehler: array_size muss durch s teilbar sein und Anzahl Prozesse == s!\n");
-        }
-        //MPI_Abort(MPI_COMM_WORLD, 1);
-    }
 
     int runs = 5;
     double total_time_ring = 0.0, total_time_native = 0.0;
