@@ -44,6 +44,17 @@ void ring_allreduce(float* array, int array_size, int s, int rank, int size) {
         }
     }
 
+    for (int p = 0; p < size; p++) {
+        if (p == rank) {
+            printf("Process %d final array: ", rank);
+            for (int i = 0; i < array_size; i++) {
+                printf("%.1f ", array[i]);
+            }
+            printf("\n");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
     free(recv_chunk);
 }
 
