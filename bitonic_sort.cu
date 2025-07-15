@@ -33,7 +33,6 @@ __global__ void preSort_shared(float* data){
 }
 
 __global__ void sort_shared(float* data, int j_start, int k){
-    if (threadIdx.x == 0) printf("entered");
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ float shared_data[TILE_S];
 
@@ -46,13 +45,11 @@ __global__ void sort_shared(float* data, int j_start, int k){
         if (partner > threadIdx.x && partner < TILE_S) {
             bool asc = ((tid & k) == 0);
             if ((shared_data[threadIdx.x] > shared_data[partner]) == asc) {
-                                    printf("swap");
                 float tmp = shared_data[threadIdx.x];
                 shared_data[threadIdx.x] = shared_data[partner];
                 shared_data[partner] = tmp;
             }
         }
-        if (partner >= TILE_S) printf("error");
         __syncthreads();
     }
 
@@ -181,20 +178,20 @@ int main() {
     int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
 
     for (int k = TILE_S; k <= N; k <<= 1) {
-        for (int j = k >> 1; j > 0; j >>= 1) {
-            if (j <= (TILE_S >> 1)){
-                sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
-                checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
-                break;
-            }
+        for (int j = k >> 1; j > 0; j >>= TILE_S) {
+            //if (j <= (TILE_S >> 1)){
+            //    sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
+            //    checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
+            //    break;
+            //}
 
             bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
             cudaDeviceSynchronize();
             //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
         }
 
-        //sort_shared<<<N / TILE_S, TILE_S>>>(d_data, (TILE_S >> 1), k);
-        //cudaDeviceSynchronize();
+        sort_shared<<<N / TILE_S, TILE_S>>>(d_data, (TILE_S >> 1), k);
+        cudaDeviceSynchronize();
         //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
     }
 
