@@ -192,7 +192,7 @@ int main() {
             checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
         }
 
-        sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
+        sort_shared<<<N / TILE_S, TILE_S>>>(d_data, (TILE_S >> 1), k);
         checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
     }
 
