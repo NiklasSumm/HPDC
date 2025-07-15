@@ -183,7 +183,7 @@ int main() {
             if (j == (TILE_S >> 1)){
                 sort_shared<<<N / TILE_S, TILE_S>>>(d_data, k);
                 checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
-                printf("breaking")
+                printf("breaking");
                 break;
             }
 
