@@ -148,7 +148,7 @@ int main() {
 //      <<<NUM_TILES, BLOCK_SIZE, SHARED_MEM>>>(d_data, N);
 //    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
 
-    preSort<<<2, 256>(d_data);
+    preSort<<<2, 256>>>(d_data);
     checkCuda(cudaGetLastError(), "Pre-Sort Kernel execution");
 
 //    // Bitonic Sort Kernel-Aufrufe
