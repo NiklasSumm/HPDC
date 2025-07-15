@@ -180,7 +180,7 @@ int main() {
     int threadsPerBlock = 256;
     int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    for (int k = TILE_S; k <= N; k <<= 1) {
+    for (int k = TILE_S * 2; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
             if (k == (N >> 0) && j <= (TILE_S >> 1)){
                 sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
