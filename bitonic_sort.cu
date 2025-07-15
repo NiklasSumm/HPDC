@@ -179,7 +179,7 @@ int main() {
 
     for (int k = TILE_S; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
-            if (j == TILE_S >> 2){
+            if (j == TILE_S >> 3){
                 sort_shared<<<N / TILE_S, TILE_S>>>(d_data, k);
                 checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
                 break;
