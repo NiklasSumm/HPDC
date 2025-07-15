@@ -146,14 +146,14 @@ int main() {
 //      <<<NUM_TILES, BLOCK_SIZE, SHARED_MEM>>>(d_data, N);
 //    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
 
-    preSort<<<N / TILE_S, TILE_S>>>(d_data);
-    checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
+    //preSort<<<N / TILE_S, TILE_S>>>(d_data);
+    //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
 
     // Bitonic Sort Kernel-Aufrufe
     int threadsPerBlock = 256;
     int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    for (int k = TILE_S; k <= N; k <<= 1) {
+    for (int k = 2; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
             bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
             checkCuda(cudaGetLastError(), "Kernel2 execution");
