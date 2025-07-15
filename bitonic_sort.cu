@@ -5,6 +5,35 @@
 
 #define N 1024  // Arraygröße (muss Potenz von 2 sein)
 
+__global__ void preSort(float* data){
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    __shared__ float shared_data[512];
+
+    shared_data[threadIdx.x] = data[blockIdx.x * blockDim.x * 2 + threadIdx.x];
+    shared_data[threadIdx.x + blockDim.x] = data[blockIdx.x * blockDim.x * 2 + blockDim.x + threadIdx.x];
+
+    __syncthreads();
+
+    for (int k = 2; k <= 512; k <<= 1) {
+        for (int j = k >> 1; j > 0; j >>= 1) {
+            int partner = threadIdx.x ^ j;
+            if (partner > threadIdx.x && partner < n) {
+                bool asc = ((tid & k) == 0);
+                if ((shared_data[threadIdx.x] > shared_data[partner]) == asc) {
+                    float tmp = shared_data[threadIdx.x];
+                    shared_data[threadIdx.x] = shared_data[partner];
+                    shared_data[partner] = tmp;
+                }
+            }
+        }
+    }
+
+    __syncthreads();
+
+    data[blockIdx.x * blockDim.x * 2 + threadIdx.x] = shared_data[threadIdx.x];
+    data[blockIdx.x * blockDim.x * 2 + blockDim.x + threadIdx.x] = shared_data[threadIdx.x + blockDim.x];
+}
+
 __global__ void bitonicSortIterative(float* data, int n, int j, int k) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   int partner = tid ^ j;
@@ -107,28 +136,31 @@ int main() {
     // Startzeit erfassen
     checkCuda(cudaEventRecord(start, 0), "cudaEventRecord start");
 
-    using Config = BitonicSortConfig;
+//    using Config = BitonicSortConfig;
+//
+//    constexpr int TILE_SIZE = Config::TILE_SIZE;
+//    constexpr int BLOCK_SIZE = Config::BLOCK_SIZE;
+//    constexpr int NUM_TILES = Config::NUM_TILES;
+//    constexpr int GRID_SIZE = Config::GRID_SIZE;
+//    constexpr int SHARED_MEM = Config::SHARED_MEM;
+//
+//    sortTilesUnrolledKernel<TILE_SIZE>
+//      <<<NUM_TILES, BLOCK_SIZE, SHARED_MEM>>>(d_data, N);
+//    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
 
-    constexpr int TILE_SIZE = Config::TILE_SIZE;
-    constexpr int BLOCK_SIZE = Config::BLOCK_SIZE;
-    constexpr int NUM_TILES = Config::NUM_TILES;
-    constexpr int GRID_SIZE = Config::GRID_SIZE;
-    constexpr int SHARED_MEM = Config::SHARED_MEM;
+    preSort<<<2, 256>(d_data);
+    checkCuda(cudaGetLastError(), "Pre-Sort Kernel execution");
 
-    sortTilesUnrolledKernel<TILE_SIZE>
-      <<<NUM_TILES, BLOCK_SIZE, SHARED_MEM>>>(d_data, N);
-    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
-
-    // Bitonic Sort Kernel-Aufrufe
-    int threadsPerBlock = 256;
-    int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
-
-    //for (int k = 2; k <= N; k <<= 1) {
-    //    for (int j = k >> 1; j > 0; j >>= 1) {
-    //        bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
-    //        checkCuda(cudaGetLastError(), "Kernel2 execution");
-    //    }
-    //}
+//    // Bitonic Sort Kernel-Aufrufe
+//    int threadsPerBlock = 256;
+//    int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
+//
+//    for (int k = 2; k <= N; k <<= 1) {
+//        for (int j = k >> 1; j > 0; j >>= 1) {
+//            bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
+//            checkCuda(cudaGetLastError(), "Kernel2 execution");
+//        }
+//    }
 
     // Stoppzeit erfassen
     checkCuda(cudaEventRecord(stop, 0), "cudaEventRecord stop");
