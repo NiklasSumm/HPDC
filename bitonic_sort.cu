@@ -181,20 +181,20 @@ int main() {
     int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
 
     for (int k = TILE_S; k <= N; k <<= 1) {
-        for (int j = k >> 1; j > (TILE_S >> 1); j >>= 1) {
-            //if (k == (N >> 1) && j <= (TILE_S >> 1)){
-            //    sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
-            //    checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
-            //    break;
-            //}
+        for (int j = k >> 1; j > 0; j >>= 1) {
+            if (k == N && j <= (TILE_S >> 1)){
+                sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
+                checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
+                break;
+            }
 
             bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
             cudaDeviceSynchronize();
             //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
         }
 
-        sort_shared<<<N / TILE_S, TILE_S>>>(d_data, (TILE_S >> 1), k);
-        cudaDeviceSynchronize();
+        //sort_shared<<<N / TILE_S, TILE_S>>>(d_data, (TILE_S >> 1), k);
+        //cudaDeviceSynchronize();
         //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
     }
 
