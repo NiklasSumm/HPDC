@@ -5,7 +5,8 @@
 
 #define N 1024  // Arraygröße (muss Potenz von 2 sein)
 
-__global__ void bitonicStep(float* data, int n, int j, int k) {
+template <int K>
+__global__ void bitonicSortIterative(float* data, int n, int j, int k) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   int partner = tid ^ j;
   if (partner > tid && partner < n) {
@@ -15,6 +16,33 @@ __global__ void bitonicStep(float* data, int n, int j, int k) {
       data[tid] = data[partner];
       data[partner] = tmp;
     }
+  }
+}
+
+template <int K>
+__device__ void bitonicStep(float* sdata, int tid) {
+  constexpr int j = K >> 1;
+  int partner = tid ^ j;
+  if (partner > tid) {
+    bool ascending = (K & tid) == 0;
+    if ((sdata[tid] > sdata[partner]) == ascending) {
+      // Swap
+      float temp = sdata[tid];
+      sdata[tid] = sdata[partner];
+      sdata[partner] = temp;
+    }
+  }
+}
+
+template <int TILE_SIZE, int K = 2>
+__device__ void bitonicSortUnrolled(float* sdata, int tid) {
+  if constexpr (K <= TILE_SIZE) {
+#pragma unroll
+    for (int j = K >> 1; j > 0; j >>= 1) {
+      bitonicStep<K>(sdata, tid);
+      __syncthreads();
+    }
+    bitonicSortUnrolled<TILE_SIZE, (K << 1)>(sdata, tid);
   }
 }
 
@@ -49,18 +77,6 @@ struct BitonicSortConfig {
   static constexpr int GRID_SIZE = (N + BLOCK_SIZE - 1) / BLOCK_SIZE;
   static constexpr int SHARED_MEM = TILE_SIZE * sizeof(float);
 };
-
-template <int TILE_SIZE, int K = 2>
-__device__ void bitonicSortUnrolled(float* sdata, int tid) {
-  if constexpr (K <= TILE_SIZE) {
-#pragma unroll
-    for (int j = K >> 1; j > 0; j >>= 1) {
-      bitonicStep<K>(sdata, tid);
-      __syncthreads();
-    }
-    bitonicSortUnrolled<TILE_SIZE, (K << 1)>(sdata, tid);
-  }
-}
 
 void checkCuda(cudaError_t result, const char* msg) {
     if (result != cudaSuccess) {
@@ -103,7 +119,7 @@ int main() {
 
     sortTilesUnrolledKernel<TILE_SIZE>
       <<<NUM_TILES, BLOCK_SIZE, SHARED_MEM>>>(d_data, N);
-    checkCuda(cudaDeviceSynchronize());
+    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
 
     // Bitonic Sort Kernel-Aufrufe
     int threadsPerBlock = 256;
@@ -111,8 +127,8 @@ int main() {
 
     for (int k = 2; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
-            bitonicStep<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
-            checkCuda(cudaGetLastError(), "Kernel execution");
+            bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
+            checkCuda(cudaGetLastError(), "Kernel2 execution");
         }
     }
 
