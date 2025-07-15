@@ -123,12 +123,12 @@ int main() {
     int threadsPerBlock = 256;
     int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    for (int k = 2; k <= N; k <<= 1) {
-        for (int j = k >> 1; j > 0; j >>= 1) {
-            bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
-            checkCuda(cudaGetLastError(), "Kernel2 execution");
-        }
-    }
+    //for (int k = 2; k <= N; k <<= 1) {
+    //    for (int j = k >> 1; j > 0; j >>= 1) {
+    //        bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
+    //        checkCuda(cudaGetLastError(), "Kernel2 execution");
+    //    }
+    //}
 
     // Stoppzeit erfassen
     checkCuda(cudaEventRecord(stop, 0), "cudaEventRecord stop");
