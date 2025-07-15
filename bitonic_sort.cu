@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 33554432  // Arraygröße (muss Potenz von 2 sein)
-#define TILE_S 1024
+#define N 512  // Arraygröße (muss Potenz von 2 sein)
+#define TILE_S 32
 
 __global__ void preSort_shared(float* data){
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -20,6 +20,7 @@ __global__ void preSort_shared(float* data){
             if (partner > threadIdx.x && partner < TILE_S) {
                 bool asc = ((threadIdx.x & k) == 0);
                 if ((shared_data[threadIdx.x] > shared_data[partner]) == asc) {
+                    printf("swap")
                     float tmp = shared_data[threadIdx.x];
                     shared_data[threadIdx.x] = shared_data[partner];
                     shared_data[partner] = tmp;
