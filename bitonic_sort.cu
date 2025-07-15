@@ -24,10 +24,9 @@ __global__ void preSort(float* data){
                     shared_data[partner] = tmp;
                 }
             }
+            __syncthreads();
         }
     }
-
-    __syncthreads();
 
     data[tid] = shared_data[threadIdx.x];
 }
