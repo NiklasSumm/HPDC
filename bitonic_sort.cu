@@ -14,7 +14,7 @@ __global__ void preSort(float* data){
 
     __syncthreads();
 
-    for (int k = 2; k <= 256; k <<= 1) {
+    for (int k = 2; k <= 512; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
             int partner = threadIdx.x ^ j;
             if (partner > threadIdx.x && partner < N) {
