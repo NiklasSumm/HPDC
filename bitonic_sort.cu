@@ -5,7 +5,6 @@
 
 #define N 1024  // Arraygröße (muss Potenz von 2 sein)
 
-template <int K>
 __global__ void bitonicSortIterative(float* data, int n, int j, int k) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   int partner = tid ^ j;
@@ -68,7 +67,6 @@ __global__ void sortTilesUnrolledKernel(float* data, int n) {
   }
 }
 
-template <int N>
 struct BitonicSortConfig {
   static_assert((N & (N - 1)) == 0, "N must be power of two");
   static constexpr int TILE_SIZE = 512;
