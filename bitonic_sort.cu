@@ -33,6 +33,7 @@ __global__ void preSort_shared(float* data){
 }
 
 __global__ void sort_shared(float* data, int j_start, int k){
+    if (threadIdx.x == 0) printf("entered");
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ float shared_data[TILE_S];
 
