@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 1024  // Arraygröße (muss Potenz von 2 sein)
+#define N 2048  // Arraygröße (muss Potenz von 2 sein)
 
 __global__ void preSort(float* data){
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
