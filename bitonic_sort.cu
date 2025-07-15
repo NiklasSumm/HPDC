@@ -20,7 +20,7 @@ __global__ void preSort_shared(float* data){
             if (partner > threadIdx.x && partner < TILE_S) {
                 bool asc = ((threadIdx.x & k) == 0);
                 if ((shared_data[threadIdx.x] > shared_data[partner]) == asc) {
-                    printf("swap")
+                    printf("swap");
                     float tmp = shared_data[threadIdx.x];
                     shared_data[threadIdx.x] = shared_data[partner];
                     shared_data[partner] = tmp;
