@@ -107,7 +107,7 @@ int main() {
     // Startzeit erfassen
     checkCuda(cudaEventRecord(start, 0), "cudaEventRecord start");
 
-    using Config = BitonicSortConfig<N>;
+    using Config = BitonicSortConfig;
 
     constexpr int TILE_SIZE = Config::TILE_SIZE;
     constexpr int BLOCK_SIZE = Config::BLOCK_SIZE;
