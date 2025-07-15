@@ -17,7 +17,7 @@ __global__ void preSort(float* data){
     for (int k = 2; k <= 512; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
             int partner = threadIdx.x ^ j;
-            if (partner > threadIdx.x && partner < n) {
+            if (partner > threadIdx.x && partner < N) {
                 bool asc = ((tid & k) == 0);
                 if ((shared_data[threadIdx.x] > shared_data[partner]) == asc) {
                     float tmp = shared_data[threadIdx.x];
