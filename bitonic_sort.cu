@@ -50,7 +50,7 @@ __global__ void sort_shared(float* data, int k){
                 shared_data[partner] = tmp;
             }
         }
-        if (partner >= TILE_S && threadIdx.x == 1023) print("error");
+        if (partner >= TILE_S && threadIdx.x == 1023) printf("error");
         __syncthreads();
     }
 
