@@ -9,15 +9,14 @@ __global__ void preSort(float* data){
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ float shared_data[512];
 
-    shared_data[threadIdx.x] = data[blockIdx.x * blockDim.x * 2 + threadIdx.x];
-    shared_data[threadIdx.x + blockDim.x] = data[blockIdx.x * blockDim.x * 2 + blockDim.x + threadIdx.x];
+    shared_data[threadIdx.x] = data[tid];
 
     __syncthreads();
 
-    for (int k = 2; k <= 256; k <<= 1) {
+    for (int k = 2; k <= 512; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
             int partner = threadIdx.x ^ j;
-            if (partner > threadIdx.x && partner < N) {
+            if (partner > threadIdx.x && partner < 512) {
                 bool asc = ((threadIdx.x & k) == 0);
                 if ((shared_data[threadIdx.x] > shared_data[partner]) == asc) {
                     float tmp = shared_data[threadIdx.x];
@@ -30,8 +29,7 @@ __global__ void preSort(float* data){
 
     __syncthreads();
 
-    data[blockIdx.x * blockDim.x * 2 + threadIdx.x] = shared_data[threadIdx.x];
-    data[blockIdx.x * blockDim.x * 2 + blockDim.x + threadIdx.x] = shared_data[threadIdx.x + blockDim.x];
+    data[tid] = shared_data[threadIdx.x];
 }
 
 __global__ void bitonicSortIterative(float* data, int n, int j, int k) {
@@ -148,7 +146,7 @@ int main() {
 //      <<<NUM_TILES, BLOCK_SIZE, SHARED_MEM>>>(d_data, N);
 //    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
 
-    preSort<<<1, 256>>>(d_data);
+    preSort<<<1, 512>>>(d_data);
     checkCuda(cudaGetLastError(), "Pre-Sort Kernel execution");
 
 //    // Bitonic Sort Kernel-Aufrufe
