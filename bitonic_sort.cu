@@ -146,7 +146,7 @@ int main() {
 //    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
 
     preSort<<<N / 512, 512>>>(d_data);
-    checkCuda(cudaGetLastError(), "Pre-Sort Kernel execution");
+    checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
 
     // Bitonic Sort Kernel-Aufrufe
     int threadsPerBlock = 256;
