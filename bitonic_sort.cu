@@ -178,7 +178,7 @@ int main() {
     int numBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
 
     for (int k = TILE_S; k <= N; k <<= 1) {
-        for (int j = k >> 1; j >= TILE_S; j >>= 1) {
+        for (int j = k >> 1; j > TILE_S; j >>= 1) {
             //if (j <= (TILE_S >> 1)){
             //    sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
             //    checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
@@ -190,7 +190,7 @@ int main() {
             //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
         }
 
-        sort_shared<<<N / TILE_S, TILE_S>>>(d_data, (TILE_S >> 1), k);
+        sort_shared<<<N / TILE_S, TILE_S>>>(d_data, TILE_S, k);
         cudaDeviceSynchronize();
         //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
     }
