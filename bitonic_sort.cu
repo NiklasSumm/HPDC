@@ -5,7 +5,7 @@
 
 #define N 1024  // Arraygröße (muss Potenz von 2 sein)
 
-__global__ void bitonicSortKernel(float* data, int n, int j, int k) {
+__global__ void bitonicStep(float* data, int n, int j, int k) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   int partner = tid ^ j;
   if (partner > tid && partner < n) {
@@ -18,7 +18,7 @@ __global__ void bitonicSortKernel(float* data, int n, int j, int k) {
   }
 }
 
-template <int K>
+template <int TILE_SIZE, int K = 2>
 __global__ void sortTilesUnrolledKernel(float* data, int n) {
   __shared__ float shared_data[TILE_SIZE];
 
@@ -29,7 +29,7 @@ __global__ void sortTilesUnrolledKernel(float* data, int n) {
   if (tile_start + tid < n) {
     shared_data[tid] = data[tile_start + tid];
   } else {
-    shared_data[tid] = FLT_MAX;
+    shared_data[tid] = 9999999;
   }
   __syncthreads();
 
@@ -111,7 +111,7 @@ int main() {
 
     for (int k = 2; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
-            bitonicSortKernel<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
+            bitonicStep<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
             checkCuda(cudaGetLastError(), "Kernel execution");
         }
     }
