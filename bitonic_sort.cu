@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 1024  // Arraygröße (muss Potenz von 2 sein)
+#define N 512  // Arraygröße (muss Potenz von 2 sein)
 
 __global__ void preSort(float* data){
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -14,7 +14,7 @@ __global__ void preSort(float* data){
 
     __syncthreads();
 
-    for (int k = 2; k <= 512; k <<= 1) {
+    for (int k = 2; k <= 256; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
             int partner = threadIdx.x ^ j;
             if (partner > threadIdx.x && partner < N) {
@@ -148,7 +148,7 @@ int main() {
 //      <<<NUM_TILES, BLOCK_SIZE, SHARED_MEM>>>(d_data, N);
 //    checkCuda(cudaDeviceSynchronize(), "Kernel1 execution");
 
-    preSort<<<2, 256>>>(d_data);
+    preSort<<<1, 256>>>(d_data);
     checkCuda(cudaGetLastError(), "Pre-Sort Kernel execution");
 
 //    // Bitonic Sort Kernel-Aufrufe
