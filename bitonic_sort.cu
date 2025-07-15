@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 2048  // Arraygröße (muss Potenz von 2 sein)
+#define N 33554432  // Arraygröße (muss Potenz von 2 sein)
 #define TILE_S 1024
 
 __global__ void preSort(float* data){
@@ -191,12 +191,12 @@ int main() {
     }
 
     // Sortiertes Array ausgeben
-    printf("Sortiertes Array:\n");
-    for (int i = 0; i < N; i++) {
-        printf("%.3f ", h_data[i]);
-        if ((i + 1) % 16 == 0) printf("\n");  // Zeilenumbruch nach 16 Werten
-    }
-    printf("\n");
+//    printf("Sortiertes Array:\n");
+//    for (int i = 0; i < N; i++) {
+//        printf("%.3f ", h_data[i]);
+//        if ((i + 1) % 16 == 0) printf("\n");  // Zeilenumbruch nach 16 Werten
+//    }
+//    printf("\n");
 
     // Events und Speicher freigeben
     cudaEventDestroy(start);
