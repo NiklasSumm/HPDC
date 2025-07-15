@@ -189,12 +189,12 @@ int main() {
             //}
 
             bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
-            cudaDeviceSynchronize()
+            cudaDeviceSynchronize();
             //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
         }
 
         sort_shared<<<N / TILE_S, TILE_S>>>(d_data, (TILE_S >> 1), k);
-        cudaDeviceSynchronize()
+        cudaDeviceSynchronize();
         //checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
     }
 
