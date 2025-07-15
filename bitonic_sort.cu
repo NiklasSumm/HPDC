@@ -40,7 +40,7 @@ __global__ void sort_shared(float* data, int j_start, int k){
 
     __syncthreads();
 
-    for (int j = j_start >> 1; j > 0; j >>= 1) {
+    for (int j = j_start; j > 0; j >>= 1) {
         int partner = threadIdx.x ^ j;
         if (partner > threadIdx.x && partner < TILE_S) {
             bool asc = ((threadIdx.x & k) == 0);
@@ -180,11 +180,11 @@ int main() {
 
     for (int k = TILE_S; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
-            //if (j <= (TILE_S >> 1)){
-            //    sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
-            //    checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
-            //    break;
-            //}
+            if (j <= (TILE_S >> 1)){
+                sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
+                checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
+                break;
+            }
 
             bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
             checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
