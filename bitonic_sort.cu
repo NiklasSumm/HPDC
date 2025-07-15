@@ -187,7 +187,7 @@ int main() {
 
 
             bitonicSortIterative<<<numBlocks, threadsPerBlock>>>(d_data, N, j, k);
-            checkCuda(cudaGetLastError(), "Kernel2 execution");
+            checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
         }
     }
 
