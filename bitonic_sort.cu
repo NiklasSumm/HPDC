@@ -32,7 +32,7 @@ __global__ void preSort_shared(float* data){
     data[tid] = shared_data[threadIdx.x];
 }
 
-__global__ void sort_shared(float* data, int k){
+__global__ void sort_shared(float* data, int j_start, int k){
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ float shared_data[TILE_S];
 
@@ -40,7 +40,7 @@ __global__ void sort_shared(float* data, int k){
 
     __syncthreads();
 
-    for (int j = TILE_S >> 1; j > 0; j >>= 1) {
+    for (int j = j_start >> 1; j > 0; j >>= 1) {
         int partner = threadIdx.x ^ j;
         if (partner > threadIdx.x && partner < TILE_S) {
             bool asc = ((threadIdx.x & k) == 0);
@@ -180,8 +180,8 @@ int main() {
 
     for (int k = TILE_S; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
-            if (j == (TILE_S >> 1)){
-                sort_shared<<<N / TILE_S, TILE_S>>>(d_data, k);
+            if (j <= (TILE_S >> 1)){
+                sort_shared<<<N / TILE_S, TILE_S>>>(d_data, j, k);
                 checkCuda(cudaDeviceSynchronize(), "Pre-Sort Kernel execution");
                 printf("breaking");
                 break;
